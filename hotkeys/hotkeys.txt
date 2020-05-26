@@ -1,0 +1,10 @@
+/play bedwars_eight_one
+/play bedwars_eight_two
+/play bedwars_four_three
+/play bedwars_four_four
+/play bedwars_two_four
+/afkwarp
+/kickoffline
+/tipall
+bruh
+please dont flatbridge
