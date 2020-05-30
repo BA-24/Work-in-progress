@@ -149,7 +149,10 @@ def tGet(number):
         if number >= len(topics):
             return [True, None]
         else:
-            return [True, topics[number].replace('\n', '', 1)]
+            if topics[number] == '' or topics[number] == '\n':
+                return[True, None]
+            else:
+                return [True, topics[number].replace('\n', '', 1)]
 
     except Exception as error:
         return [False, 'Error in tGet: ' + str(error)]
@@ -240,7 +243,7 @@ async def topics(ctx, *, msg = None):
     if length[0] == False:
         await ctx.send(length[1])
         
-    elif length[0] == True:
+    elif length[0] == True and length[1] > 0:
         
         for x in range(tLen()[1]):
             topic = tGet(x)
@@ -249,23 +252,91 @@ async def topics(ctx, *, msg = None):
                 await ctx.send(topic[1])
                 break
             
-            elif topic[0] == True:
-                printlist = printlist + [('**' + topic[1] + '**\n')]
+            elif topic[0] == True and topic[1] != None:
+                printlist = printlist + [(str(x + 1) + '. **' + topic[1] + '**\n')]
 
                 note = nGet(x, False)
                 if note[0] == False:
                     await ctx.send(note[1])
                 elif note[0] == True and note[1] != None:
                     printlist = printlist + [ ( '*' + note[1] + '*\n' ) ]
-        
-        printlist.pop()
+                    
         await ctx.send("".join(printlist))
+    else:
+        await ctx.send('There are no topics. Add a topic using ``.add [topic]``')
         
 
 
+@bot.command()
+@commands.check(channel_check)
+async def clear(ctx, function = None, *, msg = None):
+    if function == None or function == 'topics' or function == 'all':
+        f = open('topics.txt', 'w')
+        f.write('')
+        f.close()
+        f = open('notes.txt', 'w')
+        f.write('')
+        f.close()
+        await ctx.send('Cleared topics and notes.')
+
+    elif function == 'topics':
+        f = open('notes.txt', 'w')
+        f.write('')
+        f.close()
+        await ctx.send('Cleared notes')
+    else:
+        await ctx.send('Please input ``.clear notes/topics``')
 
 
 
+@bot.command()
+@commands.check(channel_check)
+async def topic(ctx, number = None, *, msg = None):
+    if number == None or number.isdigit() == False:
+        await ctx.send('Please input a number ``.topic [number]``')
+    elif number.isdigit():
+        topic = tGet(int(number)-1)
+        note = nGet(int(number)-1, False)
+        if topic[0] == False:
+            await ctx.send(topic[1])
+        if note[0] == False:
+            await ctx.send(note[1])
+        elif topic[1] == None:
+            await ctx.send('That topic doesn\'t exist!')
+        else:
+            if note[1] == None:
+                await ctx.send(number + '. **' + topic[1] + '**')
+            else:
+                await ctx.send(number + '. **' + topic[1] + '**\n*' + note[1] + '*')
+
+
+@bot.command()
+@commands.check(channel_check)
+async def vote(ctx, *, msg = None):
+    if msg == None:
+        await ctx.send('Please input a number or message``.topic [number]``')
+    elif msg.isdigit() == False:
+        send = await ctx.send(msg)
+        await send.add_reaction('\N{THUMBS UP SIGN}')
+        await send.add_reaction('\N{THUMBS DOWN SIGN}')
+    elif msg.isdigit() == True:
+        topic = tGet(int(msg)-1)
+        note = nGet(int(msg)-1, False)
+        if topic[0] == False:
+            await ctx.send(topic[1])
+        if note[0] == False:
+            await ctx.send(note[1])
+        elif topic[1] == None:
+            await ctx.send('That topic doesn\'t exist!')
+        else:
+            if note[1] == None:
+                send = await ctx.send(msg + '. **' + topic[1] + '**')
+                await send.add_reaction('\N{THUMBS UP SIGN}')
+                await send.add_reaction('\N{THUMBS DOWN SIGN}')
+            else:
+                send = await ctx.send(msg + '. **' + topic[1] + '**\n*' + note[1] + '*')
+                await send.add_reaction('\N{THUMBS UP SIGN}')
+                await send.add_reaction('\N{THUMBS DOWN SIGN}')
 
 
 
