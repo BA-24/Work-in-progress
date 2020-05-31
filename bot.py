@@ -1,4 +1,4 @@
-#THIS IS A WORK IN PROGRESS AND DOES NOT CURRENTLY WORK
+#THIS IS NOT DONE YET AND FEATURES MIGHT NOT WORK AS EXPECTEDLY OR AT ALL
 
 #list managing ---------------------------------------------------------------------------------------
 
@@ -169,6 +169,22 @@ def tLen():
         return [False, 'Error in tLen: ' + str(error)]
 
 
+def dFormat():
+    try:
+        printlist = []
+        for x in range(tLen()[1]):
+            topic = tGet(x)
+            if topic[0] == True and topic[1] != None:
+                printlist = printlist + [(str(x + 1) + '. **' + topic[1] + '**\n')]
+
+                note = nGet(x, False)
+                if note[0] == True and note[1] != None:
+                    printlist = printlist + [ ( '*' + note[1] + '*\n' ) ]
+        return [True, "".join(printlist)]
+    except Exception as error:
+        return [False, error]
+
+
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -244,24 +260,11 @@ async def topics(ctx, *, msg = None):
         await ctx.send(length[1])
         
     elif length[0] == True and length[1] > 0:
-        
-        for x in range(tLen()[1]):
-            topic = tGet(x)
-            
-            if topic[0] == False:
-                await ctx.send(topic[1])
-                break
-            
-            elif topic[0] == True and topic[1] != None:
-                printlist = printlist + [(str(x + 1) + '. **' + topic[1] + '**\n')]
-
-                note = nGet(x, False)
-                if note[0] == False:
-                    await ctx.send(note[1])
-                elif note[0] == True and note[1] != None:
-                    printlist = printlist + [ ( '*' + note[1] + '*\n' ) ]
-                    
-        await ctx.send("".join(printlist))
+        printlist = dFormat()
+        if printlist[0] == False:
+            await ctx.send(printlist[1])
+        elif printlist[0] == True:
+            await ctx.send(printlist[1])
     else:
         await ctx.send('There are no topics. Add a topic using ``.add [topic]``')
         
@@ -340,6 +343,17 @@ async def vote(ctx, *, msg = None):
 
 
 
+@bot.command()
+@commands.check(channel_check)
+async def end(ctx, *, msg = None):
+    length = tLen()
+    if length[0] == False:
+        await ctx.send(length[1])
+    elif length[0] == True and length[1] < 1:
+        await ctx.send('Looks like there aren\'t any topics yet. ``.add [topic]``')
+    elif length[0] == True and length[1] > 0:
+        pass
+        
 
 
 
@@ -365,4 +379,5 @@ async def vote(ctx, *, msg = None):
 
 
 
-bot.run(token)
+
+bot.run('token')
