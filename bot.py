@@ -2,10 +2,45 @@
 
 #list managing ---------------------------------------------------------------------------------------
 
+def backup(mode):
+    try:
+        if mode == 'save':
+            f = open('notes.txt', 'r')
+            notes = f.read()
+            f.close()
+            f = open('topics.txt', 'r')
+            topics = f.read()
+            f.close()
+            f = open('backup\notes.txt', 'w')
+            f.write(notes)
+            f.close()
+            f = open('backup\topics.txt', 'w')
+            f.write(topics)
+            f.close()
+            return [True, 'save']
+        elif mode == 'load':
+            f = open('backup\notes.txt', 'r')
+            notes = f.read()
+            f.close()
+            f = open('backup\topics.txt', 'r')
+            topics = f.read()
+            f.close()
+            f = open('notes.txt', 'w')
+            f.write(notes)
+            f.close()
+            f = open('topics.txt', 'w')
+            f.write(topics)
+            f.close()
+            return [True, 'load']
+        return [True, None]
+        
+    except Exception as error:
+        return[False, error]
+
 def nAdd(number, msg):
     try:
         number = str(number)
-        x = open('notes.txt', 'a')
+        x = open('notes.txt','a')
         x.write(number + ' ' + msg + '\n')
         x.close()
         return [True, None]
@@ -97,7 +132,7 @@ def nLen():
 
 def tAdd(msg):
     try:
-        x = open('topics.txt', 'a')
+        x = open('topics.txt', None)
         x.write(msg + '\n')
         x.close()
         return [True, None]
@@ -191,6 +226,7 @@ def dFormat():
 import discord
 import time
 import asyncio
+import datetime
 from discord.ext import commands
 bot = commands.Bot(command_prefix = '.')
 bot.remove_command('help')
@@ -282,11 +318,19 @@ async def clear(ctx, function = None, *, msg = None):
         f.close()
         await ctx.send('Cleared topics and notes.')
 
+        Backup = backup('save')
+        if Backup[0] == False:
+            await ctx.send(Backup[1])
+
     elif function == 'topics':
         f = open('notes.txt', 'w')
         f.write('')
         f.close()
         await ctx.send('Cleared notes')
+
+        Backup = backup('save')
+        if Backup[0] == False:
+            await ctx.send(Backup[1])
     else:
         await ctx.send('Please input ``.clear notes/topics``')
 
@@ -346,15 +390,139 @@ async def vote(ctx, *, msg = None):
 @bot.command()
 @commands.check(channel_check)
 async def end(ctx, *, msg = None):
+    logging_channel = bot.get_channel(626495610261864468)
+    time = list(str(datetime.datetime.now()))
+    for x in range(10):
+        time.pop()
+    time = "".join(time)
     length = tLen()
     if length[0] == False:
         await ctx.send(length[1])
     elif length[0] == True and length[1] < 1:
         await ctx.send('Looks like there aren\'t any topics yet. ``.add [topic]``')
     elif length[0] == True and length[1] > 0:
-        pass
+        printlist = dFormat()
+        if printlist[0] == False:
+            await ctx.send(printlist[1])
+        elif printlist[0] == True:
+            if msg == None:
+                await logging_channel.send('ended: ' + time + '\n\n' + str(printlist[1]))
+            elif msg != None:
+                await logging_channel.send('ended: ' + time + '\ncomment: ' + msg + '\n\n' + str(printlist[1]))
+
+            Backup = backup('save')
+            if Backup[0] == False:
+                await ctx.send(Backup[1])
+                
+            
+            f = open('topics.txt', 'w')
+            f.write('')
+            f.close()
+            f = open('notes.txt', 'w')
+            f.write('')
+            f.close()
+            
+            
+
+
+@bot.command()
+@commands.check(channel_check)
+async def note(ctx, function = None, number = None, *, msg = None):
+    if function == None or number == None:
+        await ctx.send('Please input a function ``note edit/add/delete TopicNumber text``')
+    elif (function == 'edit' or function == 'add' or function == 'delete') and (number.isdigit()) == False:
+        await ctx.send('Please input a topic number ``note edit/add/delete TopicNumber text``')
+    elif ((function == 'edit' or function == 'add') and (number.isdigit()) == True) and msg == None:
+        await ctx.send('Please input a message after the topic number ``note edit/add/delete TopicNumber text``')
+    else:
+        number = int(number)
+        if function == 'edit':
+            delete = nDel(number)
+            if delete[0] == False:
+                await ctx.send(delete[1])
+
+            elif delete[1] == None and delete[0] == True:
+                await ctx.send('That note doesn\'t exist!')
+            else:
+                add = nAdd(number, msg)
+                if add[0] == False:
+                    await ctx.send(add[1])
+                elif add[0] == True:
+                    await ctx.send('Successfully edited **' + ((delete[1]).replace('\n', '', 1)).replace((str(number) + ' '), '', 1) + '** to **' + msg + '**')
+
+
+        if function == 'add':
+            add = nAdd(number, msg)
+            if add[0] == False:
+                await ctx.send(add[1])
+            else:
+                await ctx.send('Succesfully added **' + msg + '** as a note')
+
+
+        if function == 'delete':
+            delete = nDel(number)
+            if delete[0] == False:
+                await ctx.send(delete[1])
+            else:
+                await ctx.send('Succesfully removed **' + ((delete[1]).replace('\n', '', 1)).replace((str(number) + ' '), '', 1) + '** from the notes list')
         
 
+           
+
+@bot.command()
+@commands.check(channel_check)
+async def help(ctx, command = None):
+    check = False
+    if command == None:
+        check = True
+        await ctx.send(f'List of all commands:\n\n``add [topic]`` - Adds the specified message to the topics list.\n\n``remove [topicNumber / topic]`` - Removes the specified topic.\n\n``topics`` - Shows the full list of all the current topics and notes.\n\n``topic [number]`` - Shows the specified topic and note.\n\n``vote [topicNumber / message]`` - Sends a voting message of the specified topic or sends a voting message of the specified custom message if a number is not passed through.\n\n``note [add/edit/delete] [topic number] [message/empty]`` - Adds the specified note to the note list, deletes the specified note or edits the specified note.\n\n``end [comment]`` Ends the current session logging the notes and topics as well as timestamp in the logging channel specified in the source code.\n\n``ping`` - Shows the current latency of the bot.\n\n``help [empty/command]`` - Shows this message if left empty, shows more info about the command if command is specified.')
+    command = str(command)
+    if command == 'add':
+        check = True
+        await ctx.send('``add [topic]`` - Adds the specified message to the topics list. Topic cannot be left empty')
+    if command == 'remove':
+        check = True
+        await ctx.send('``remove [number]`` - Removes the specified topic. Number cannot be left empty. Aliases: delete, del, erase')
+    if command == 'topics':
+        check = True
+        await ctx.send('``topics`` - Shows the full list of all the current topics and notes.')
+    if command == 'topic':
+        check = True
+        await ctx.send('``topic [number]`` - Shows the topic and note for the specified number. Number cannot be left empty.')
+    if command == 'vote':
+        check = True
+        await ctx.send('``vote [topicNumber / message]`` - Sends a voting message of the specified topic or sends a voting message of the specified custom message if a number is not passed through. topicNumber / message cannot be left empty')
+    if command == 'note':
+        check = True
+        await ctx.send('``note [add/edit/delete] [topic number] [message/empty]`` - if add is selected, adds the specified note to the note list, if delete is selected, deletes the specified note, if edit is selected, edits the specified note. add/edit/delete and number cannot be left empty. message can only be left empty if delete is selected.')
+    if command == 'end':
+        check = True
+        await ctx.send('``end [comment]`` Ends the current session logging the notes and topics as well as timestamp in the logging channel specified in the source code. (no longer requires you to confirm)')
+    if command == 'next':
+        check = True
+        await ctx.send('``next`` Shows the next topic. Last mentioned topic can be defined by the "topic" command or any previous mention of the "next" command')
+    if command == 'clear':
+        check = True
+        await ctx.send('``clear [note/topics/empty]`` - Clears all topics and notes if empty or if topics is selected, only clears notes if notes is selected. Can be left empty, default value: topics')
+    if command == 'ping':
+        check = True
+        await ctx.send('``ping`` - Shows the current latency of the bot. Can be used as a test command to see if the bot is running.')
+    if command == 'help':
+        check = True
+        await ctx.send('``help [empty/command]`` - Shows list of all commands and basic usage of them if left empty. Shows detailed information and usage of the specified command if command is specified.')
+    if check == False:
+        await ctx.send('Command not recognized.')
+
+
+
+@bot.command()
+@commands.check(channel_check)
+async def load(ctx, *, msg = None):
+    Backup = backup('load')
+    if Backup[0] == False:
+        await ctx.send(Backup[1])
+    else:
+        await ctx.send('Successfully ')
 
 
 
@@ -371,13 +539,4 @@ async def end(ctx, *, msg = None):
 
 
 
-
-
-
-
-
-
-
-
-
-bot.run('token')
+bot.run(token)
