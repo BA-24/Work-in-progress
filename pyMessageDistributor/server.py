@@ -2,7 +2,7 @@ import socket
 import select
  
 headerLength = 10
-ip = "192.168.1.240"
+ip = "127.0.0.1"
 port = 2
  
 serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
