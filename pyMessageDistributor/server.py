@@ -76,7 +76,7 @@ while True:
                 continue
             user = clients[notifiedSocket]
             print(f"Received message from {user[0]} in {user[1]}: {message[0]}")
-            returnMsg = f"{len('True'):<{headerLength}}".encode("utf-8") + "True".encode("utf-8") + f"{len('you are gay'):<{headerLength}}".encode("utf-8") + "you are gay".encode("utf-8")
+            returnMsg = f"{len('True'):<{headerLength}}".encode("utf-8") + "True".encode("utf-8") + f"{len(message[0]):<{headerLength}}".encode("utf-8") + message[0].encode("utf-8")
             notifiedSocket.send(returnMsg)
 
             for clientSocket in clients:
